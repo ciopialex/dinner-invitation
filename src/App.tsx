@@ -108,7 +108,7 @@ export default function App() {
 
   const handleShare = () => {
     const text = encodeURIComponent("You have a deal. Where are you taking me?");
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+    window.open(`https://wa.me/40748165634?text=${text}`, "_blank");
   };
 
   const handleCopy = () => {
