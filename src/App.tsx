@@ -20,15 +20,23 @@ const SNARKY_REMARKS = [
   "Okay fine, you win.",
 ];
 
-// Anchors with guaranteed vertical and horizontal clearance from the center button
-const EVASION_ANCHORS = [
-  { x: 120, y: -78 },
-  { x: -120, y: 78 },
-  { x: 120, y: 78 },
-  { x: -120, y: -78 },
-  { x: 0, y: 82 },
-  { x: 0, y: -82 },
+// Anchors for desktop full 2D perimeter evasion
+const DESKTOP_ANCHORS = [
+  { x: 125, y: -72 },
+  { x: -125, y: 72 },
+  { x: 125, y: 72 },
+  { x: -125, y: -72 },
+  { x: 0, y: 78 },
+  { x: 0, y: -78 },
   { x: 135, y: 0 },
+];
+
+// Anchors for mobile: strictly vertical to ensure zero edge clipping on narrow phone screens
+const MOBILE_ANCHORS = [
+  { x: 0, y: -70 },
+  { x: 0, y: 70 },
+  { x: -15, y: -70 },
+  { x: 15, y: 70 },
 ];
 
 export default function App() {
@@ -39,21 +47,22 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Evasion engine: leap to guaranteed clear zones
+  // Evasion engine: responsive leaps ensuring zero screen clipping
   const evade = useCallback(() => {
     setNoAttempts((prev) => {
       const nextCount = prev + 1;
       const remarkIndex = Math.min(nextCount - 1, SNARKY_REMARKS.length - 1);
       setSnarkText(SNARKY_REMARKS[remarkIndex]);
 
-      const anchor = EVASION_ANCHORS[(nextCount - 1) % EVASION_ANCHORS.length];
-      
-      // On narrow mobile devices, keep horizontal bounds safe while preserving vertical clearance
-      const isMobile = window.innerWidth < 480;
-      const targetX = isMobile ? anchor.x * 0.7 : anchor.x;
-      const targetY = anchor.y;
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        const anchor = MOBILE_ANCHORS[(nextCount - 1) % MOBILE_ANCHORS.length];
+        setNoPos(anchor);
+      } else {
+        const anchor = DESKTOP_ANCHORS[(nextCount - 1) % DESKTOP_ANCHORS.length];
+        setNoPos(anchor);
+      }
 
-      setNoPos({ x: targetX, y: targetY });
       return nextCount;
     });
   }, []);

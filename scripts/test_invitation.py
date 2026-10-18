@@ -98,21 +98,34 @@ def run_tests():
         mobile_no = mobile_page.locator("button:has-text(\"No\")")
         m_box_before = mobile_no.bounding_box()
 
-        # Simulate touch start / tap on phone
-        mobile_page.touchscreen.tap(m_box_before["x"] + 10, m_box_before["y"] + 10)
-        time.sleep(0.4)
+        # Simulate 14 consecutive touches to replicate user screenshot condition
+        for tap_idx in range(14):
+            curr_btn = mobile_page.locator("button:has-text(\"No\"), button:has-text(\"Fine, you win\")")
+            box = curr_btn.bounding_box()
+            mobile_page.touchscreen.tap(box["x"] + 15, box["y"] + 15)
+            time.sleep(0.15)
 
-        m_box_after = mobile_no.bounding_box()
-        assert (m_box_after["x"] != m_box_before["x"] or 
-                m_box_after["y"] != m_box_before["y"]), "Touch tap failed to evade on mobile!"
+        # At 14 dodges, button should say 'Fine, you win'
+        morphed_btn = mobile_page.locator("button:has-text(\"Fine, you win\")")
+        assert morphed_btn.is_visible(), "Button should be morphed to 'Fine, you win' after 14 dodges"
+        m_box_after = morphed_btn.bounding_box()
         
-        # Verify it stayed on screen
-        assert 0 <= m_box_after["x"] <= 390 - m_box_after["width"], "Mobile No button escaped screen boundary!"
-        print("  ✓ Mobile touch evasion successful and clamped safely inside viewport.")
+        # Verify it is completely within the 390px iPhone screen
+        right_edge = m_box_after["x"] + m_box_after["width"]
+        assert m_box_after["x"] >= 15, f"Left edge clipped: {m_box_after['x']} < 15"
+        assert right_edge <= 375, f"Right edge clipped: {right_edge} > 375"
+        print(f"  ✓ 14-dodge mobile test passed: button nicely centered at [{m_box_after['x']:.1f}, {right_edge:.1f}] within 390px.")
+
+        # Check tooltip bounds
+        tooltip = mobile_page.locator("text=Okay fine, you win.")
+        if tooltip.is_visible():
+            t_box = tooltip.bounding_box()
+            assert t_box["x"] >= 10 and (t_box["x"] + t_box["width"]) <= 380, "Tooltip clipped on mobile!"
+            print(f"  ✓ Tooltip bounded within screen: [{t_box['x']:.1f}, {t_box['x'] + t_box['width']:.1f}]")
 
         mobile_shot = os.path.join(ARTIFACT_DIR, "mobile_view.png")
         mobile_page.screenshot(path=mobile_shot)
-        print(f"  ✓ Mobile screenshot saved: {mobile_shot}")
+        print(f"  ✓ Mobile 14-dodge screenshot saved: {mobile_shot}")
         mobile_context.close()
 
         # --- TEST 5: Acceptance & Celebration Flow ---
